@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
 using CommandLine;
 
@@ -14,7 +15,7 @@ namespace OctoParamsCounter
         [Option('d', "directory", Required = false, HelpText = "Directory to search.", Default = ".")]
         public string Directory { get; set; }
 
-        [Option('p', "pattern", Required = false, HelpText = "Regex for Octopus parameters. Default is \"(\\#\\{|OctopusParameters\\[)(.*)\"", Default = "(\\#\\{|OctopusParameters\\[)(.*)")]
+        [Option('p', "pattern", Required = false, HelpText = "Regex for Octopus parameters. Default is \"(\\#\\{|OctopusParameters\\[)(.*)\"", Default = @"(\#\{|OctopusParameters\[)([^\]\}]*)")]
         public string OctoParamPattern { get; set; }
 
         [Option('r', "recursive", Required = false, HelpText = "Recursive search", Default = true)]
@@ -33,7 +34,7 @@ namespace OctoParamsCounter
         {
             try
             {
-                Regex search = new Regex(opts.OctoParamPattern);
+                Regex search = new Regex(opts.OctoParamPattern, RegexOptions.Compiled);
                 foreach (string inputFilePattern in opts.InputFiles)
                 {
                     foreach (string file in Directory.GetFiles(opts.Directory, inputFilePattern, opts.Recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly))
@@ -42,9 +43,12 @@ namespace OctoParamsCounter
                         for (int i = 0; i < lines.Length; i++)
                         {
                             string line = lines[i];
-                            if (search.IsMatch(line))
+                            foreach (Match match in search.Matches(line))
                             {
-                                Console.WriteLine($"{file}({i}) : {line}");
+                                string octoParam = TrimOctoParam(match.Groups[2].Value);
+                                if (octoParam.StartsWith("/"))
+                                    continue;
+                                Console.WriteLine($"{file}({i})({octoParam})");
                             }
                         }
                     }
@@ -54,6 +58,13 @@ namespace OctoParamsCounter
             {
                 Console.WriteLine(excpt.Message);
             }
+        }
+
+        private static string TrimOctoParam(string octoParam)
+        {
+            return octoParam.Replace("'", "").Replace(@"\", "").Replace("\"", "") // remove quotes
+                .Split("|").First().Trim() // remove filters.
+                .Split(" ").Last().Trim(); // remove conditionals
         }
     }
 }
