@@ -36,6 +36,7 @@ namespace OctoParamsCounter
         {
             try
             {
+                SortedDictionary<string, List<string>> counts = new SortedDictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
                 Regex search = new Regex(opts.OctoParamPattern, RegexOptions.Compiled);
                 foreach (string inputFilePattern in opts.InputFiles)
                 {
@@ -48,10 +49,21 @@ namespace OctoParamsCounter
                             foreach (Match match in search.Matches(line))
                             {
                                 string octoParam = TrimOctoParam(match.Groups[2].Value);
-                                Console.WriteLine($"{file}({i}) : {octoParam}");
+                                var fileLineInfo = $"{file}({i})";
+                                if (!counts.ContainsKey(octoParam))
+                                    counts.Add(octoParam, new List<string> { fileLineInfo });
+                                else
+                                    counts[octoParam].Add(fileLineInfo);
+                                Console.WriteLine($"{fileLineInfo} : {octoParam}");
                             }
                         }
                     }
+                }
+
+                Console.WriteLine("Totals:");
+                foreach (KeyValuePair<string, List<string>> count in counts)
+                {
+                    Console.WriteLine($"\t{count.Key} : {count.Value.Count}");
                 }
             }
             catch (Exception excpt)
