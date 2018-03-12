@@ -17,7 +17,7 @@ namespace OctoParamsCounter
         [Option('d', "directory", Required = false, HelpText = "Directory to search.", Default = ".")]
         public string Directory { get; set; }
 
-        [Option('p', "pattern", Required = false, HelpText = "Regex for Octopus parameters. Default is " + DefaultPattern, Default = DefaultPattern)]
+        [Option('p', "pattern", Required = false, HelpText = "Regex for Octopus parameters.", Default = DefaultPattern)]
         public string OctoParamPattern { get; set; }
 
         [Option('r', "recursive", Required = false, HelpText = "Recursive search", Default = true)]
