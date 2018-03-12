@@ -25,6 +25,9 @@ namespace OctoParamsCounter
 
         [Option('s', "references", Required = false, HelpText = "Show references", Default = false)]
         public bool ShowReferences { get; set; }
+
+        [Option('v', "verbose", Required = false, HelpText = "Show verbose log", Default = false)]
+        public bool Verbose { get; set; }
     }
 
     class Program
@@ -57,20 +60,22 @@ namespace OctoParamsCounter
                                     counts.Add(octoParam, new List<string> { fileLineInfo });
                                 else
                                     counts[octoParam].Add(fileLineInfo);
-                                Console.WriteLine($"{fileLineInfo} : {octoParam}");
+                                if (opts.Verbose)
+                                    Console.WriteLine($"{fileLineInfo}({octoParam}) : {line}");
                             }
                         }
                     }
                 }
 
-                Console.WriteLine("Totals:");
+                Console.WriteLine("Found Octopus parameters:");
+                Console.WriteLine();
                 foreach (KeyValuePair<string, List<string>> count in counts)
                 {
-                    Console.WriteLine($"\t{count.Key} : {count.Value.Count}");
+                    Console.WriteLine($"{count.Key} : {count.Value.Count}");
                     if (opts.ShowReferences)
                     {
                         foreach (string reference in count.Value)
-                            Console.WriteLine($"\t\t{reference}");
+                            Console.WriteLine($"\t{reference}");
                     }
                 }
             }
