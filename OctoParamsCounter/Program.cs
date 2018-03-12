@@ -9,13 +9,15 @@ namespace OctoParamsCounter
 {
     class Options
     {
+        private const string DefaultPattern = @"(\#\{|OctopusParameters\[)([^\/\]\}]+)";
+
         [Option('i', "input", Required = true, HelpText = "Input files to be processed. e.g. *.json or foo.json")]
         public IEnumerable<string> InputFiles { get; set; }
 
         [Option('d', "directory", Required = false, HelpText = "Directory to search.", Default = ".")]
         public string Directory { get; set; }
 
-        [Option('p', "pattern", Required = false, HelpText = "Regex for Octopus parameters. Default is \"(\\#\\{|OctopusParameters\\[)(.*)\"", Default = @"(\#\{|OctopusParameters\[)([^\]\}]*)")]
+        [Option('p', "pattern", Required = false, HelpText = "Regex for Octopus parameters. Default is " + DefaultPattern, Default = DefaultPattern)]
         public string OctoParamPattern { get; set; }
 
         [Option('r', "recursive", Required = false, HelpText = "Recursive search", Default = true)]
@@ -46,9 +48,7 @@ namespace OctoParamsCounter
                             foreach (Match match in search.Matches(line))
                             {
                                 string octoParam = TrimOctoParam(match.Groups[2].Value);
-                                if (octoParam.StartsWith("/"))
-                                    continue;
-                                Console.WriteLine($"{file}({i})({octoParam})");
+                                Console.WriteLine($"{file}({i}) : {octoParam}");
                             }
                         }
                     }
