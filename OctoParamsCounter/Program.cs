@@ -56,7 +56,7 @@ namespace OctoParamsCounter
                             string line = lines[i];
                             foreach (string octoParam in ExtractOctoParams(search, line))
                             {
-                                var fileLineInfo = $"{file}({i})";
+                                var fileLineInfo = $"{file}({i + 1})";
                                 if (!counts.ContainsKey(octoParam))
                                     counts.Add(octoParam, new List<string> { fileLineInfo });
                                 else
