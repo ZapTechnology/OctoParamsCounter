@@ -7,9 +7,9 @@ using CommandLine;
 
 namespace OctoParamsCounter
 {
-    class Options
+    public class Options
     {
-        private const string DefaultPattern = @"(\#\{|OctopusParameters\[)([^\/\]\}]+)";
+        public const string DefaultPattern = @"\#\{([^\/\}]+)|OctopusParameters\[(?:\'|\"")([^\/\'\""]+)(?:\'|\"")\]";
 
         [Option('i', "input", Required = true, HelpText = "Input files to be processed. e.g. *.json or foo.json")]
         public IEnumerable<string> InputFiles { get; set; }
@@ -17,7 +17,7 @@ namespace OctoParamsCounter
         [Option('d', "directory", Required = false, HelpText = "Directory to search.", Default = ".")]
         public string Directory { get; set; }
 
-        [Option('p', "pattern", Required = false, HelpText = "Regex for Octopus parameters.", Default = DefaultPattern)]
+        [Option('p', "pattern", Required = false, HelpText = "Regex for Octopus parameters, with the capturing group containing the Octopus parameter. For advanced usage only", Default = DefaultPattern)]
         public string OctoParamPattern { get; set; }
 
         [Option('r', "recursive", Required = false, HelpText = "Recursive search", Default = true)]
@@ -30,8 +30,10 @@ namespace OctoParamsCounter
         public bool Verbose { get; set; }
     }
 
-    class Program
+    public class Program
     {
+        private static readonly string[] Conditionals = { "if", "unless", "each" };
+
         static void Main(string[] args)
         {
             Parser.Default.ParseArguments<Options>(args)
@@ -52,9 +54,8 @@ namespace OctoParamsCounter
                         for (int i = 0; i < lines.Length; i++)
                         {
                             string line = lines[i];
-                            foreach (Match match in search.Matches(line))
+                            foreach (string octoParam in ExtractOctoParams(search, line))
                             {
-                                string octoParam = TrimOctoParam(match.Groups[2].Value);
                                 var fileLineInfo = $"{file}({i})";
                                 if (!counts.ContainsKey(octoParam))
                                     counts.Add(octoParam, new List<string> { fileLineInfo });
@@ -85,11 +86,22 @@ namespace OctoParamsCounter
             }
         }
 
+        public static IEnumerable<string> ExtractOctoParams(Regex search, string line)
+        {
+            return search.Matches(line)
+                .Select(m => TrimOctoParam(m.Groups.Skip(1).First(g => g.Success).Value));
+        }
+
         private static string TrimOctoParam(string octoParam)
         {
-            return octoParam.Replace("'", "").Replace(@"\", "").Replace("\"", "") // remove quotes
-                .Split("|").First().Trim() // remove filters.
-                .Split(" ").Last().Trim(); // remove conditionals
+            //remove filters
+            string filtersRemoved = octoParam.Split("|").First().Trim();
+
+            //remove conditionals
+            string[] split = filtersRemoved.Split(" ");
+            return Conditionals.Contains(split.First(), StringComparer.OrdinalIgnoreCase)
+                ? string.Join("", split.Skip(1))
+                : filtersRemoved;
         }
     }
 }

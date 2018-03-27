@@ -7,7 +7,8 @@ Command line options:
 
   -d, --directory     (Default: .) Directory to search.
 
-  -p, --pattern       (Default: (\#\{|OctopusParameters\[)([^\/\]\}]+)) Regex for Octopus parameters.
+  -p, --pattern       (Default: \#\{([^\/\}]+)|OctopusParameters\[(?:\'|\")([^\/\'\"]+)(?:\'|\")\]) Regex for Octopus parameters, with the capturing group
+                      containing the Octopus parameter. For advanced usage only
 
   -r, --recursive     (Default: true) Recursive search
 
